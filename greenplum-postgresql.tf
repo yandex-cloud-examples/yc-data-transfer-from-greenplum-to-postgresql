@@ -16,20 +16,26 @@ locals {
   # Specify these settings ONLY AFTER the clusters are created. Then run "terraform apply" command again.
   # You should set up the source endpoint using the GUI to obtain its ID
   gp_source_endpoint_id = "" # Set the source endpoint ID
-  transfer_enabled      = 0  # Value '0' disables creating of transfer before the source endpoint is created manually. After that, set to '1' to enable transfer
+  transfer_enabled      = 0  # Value '0' disables creating of transfer before the source endpoint is created manually. After that, set to '1' to enable transfer.
 
   # The following settings are predefined. Change them only if necessary.
+
+  # Managed Service for Greenplum®:
   mgp_network_name        = "mgp_network"        # Name of the network for the Greenplum® cluster
-  mpg_network_name        = "mpg_network"        # Name of the network for the PostgreSQL cluster
   mgp_subnet_name         = "mgp_subnet-a"       # Name of the subnet for the Greenplum® cluster
-  mpg_subnet_name         = "mpg_subnet-a"       # Name of the subnet for the PostgreSQL cluster
   mgp_security_group_name = "mgp-security-group" # Name of the security group for the Greenplum® cluster
-  mpg_security_group_name = "mpg-security-group" # Name of the security group for the PostgreSQL cluster
   gp_cluster_name         = "mgp-cluster"        # Name of the Greenplum® cluster
   gp_username             = "gp-user"            # Name of the Greenplum® username
+
+  # Managed Service for PostgreSQL:
+  mpg_network_name        = "mpg_network"        # Name of the network for the PostgreSQL cluster
+  mpg_subnet_name         = "mpg_subnet-a"       # Name of the subnet for the PostgreSQL cluster
+  mpg_security_group_name = "mpg-security-group" # Name of the security group for the PostgreSQL cluster
   pg_cluster_name         = "mpg-cluster"        # Name of the PostgreSQL cluster
   pg_db_name              = "db1"                # Name of the PostgreSQL cluster database
   pg_username             = "pg-user"            # Name of the PostgreSQL cluster username
+
+  # Data Transfer:
   target_endpoint_name    = "pg-target-tf"       # Name of the target endpoint for the PostgreSQL cluster
   transfer_name           = "mgp-mpg-transfer"   # Name of the transfer from the Managed Service for Greenplum® cluster to the Managed Service for PostgreSQL cluster
 }
