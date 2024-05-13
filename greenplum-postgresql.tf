@@ -1,22 +1,22 @@
 # Infrastructure for Yandex Cloud Managed Service for Greenplum® cluster, Yandex Cloud Managed Service for PostgreSQL, and Data Transfer
 #
-# RU: https://cloud.yandex.ru/docs/data-transfer/tutorials/greenplum-to-postgresql
-# EN: https://cloud.yandex.com/en/docs/data-transfer/tutorials/greenplum-to-postgresql
+# RU: https://yandex.cloud/ru/docs/data-transfer/tutorials/greenplum-to-postgresql
+# EN: https://yandex.cloud/en/docs/data-transfer/tutorials/greenplum-to-postgresql
 
 # Specify the following settings
 locals {
   # Settings for Managed Service for Greenplum® cluster:
-  gp_version  = "" # Set the Greenplum® version. For available versions, see the documentation main page: https://cloud.yandex.com/en/docs/managed-greenplum/.
-  gp_password = "" # Set a password for the Greenplum® admin user
+  gp_version  = "" # Greenplum® version. For available versions, see the documentation main page: https://yandex.cloud/en/docs/managed-greenplum/.
+  gp_password = "" # Greenplum® admin's password
 
   # Settings for Managed Service for PostgreSQL cluster:
-  pg_version  = "" # Set the PostgreSQL version. For available versions, see the documentation main page: https://cloud.yandex.com/en/docs/managed-postgresql/.
-  pg_password = "" # Set a password for the PostgreSQL admin user
+  pg_version  = "" # PostgreSQL version. For available versions, see the documentation main page: https://yandex.cloud/en/docs/managed-postgresql/.
+  pg_password = "" # PostgreSQL admin's password
 
   # Specify these settings ONLY AFTER the clusters are created. Then run "terraform apply" command again.
   # You should set up the source endpoint using the GUI to obtain its ID
   gp_source_endpoint_id = "" # Set the source endpoint ID
-  transfer_enabled      = 0  # Value '0' disables creating of transfer before the source endpoint is created manually. After that, set to '1' to enable transfer.
+  transfer_enabled      = 0  # Value '0' disables the transfer creation before the source endpoint is created manually. After that, set to '1' to enable the transfer.
 
   # The following settings are predefined. Change them only if necessary.
 
@@ -25,7 +25,7 @@ locals {
   mgp_subnet_name         = "mgp_subnet-a"       # Name of the subnet for the Greenplum® cluster
   mgp_security_group_name = "mgp-security-group" # Name of the security group for the Greenplum® cluster
   gp_cluster_name         = "mgp-cluster"        # Name of the Greenplum® cluster
-  gp_username             = "gp-user"            # Name of the Greenplum® username
+  gp_username             = "gp-user"            # Username of the Greenplum® cluster
 
   # Managed Service for PostgreSQL:
   mpg_network_name        = "mpg_network"        # Name of the network for the PostgreSQL cluster
@@ -33,7 +33,7 @@ locals {
   mpg_security_group_name = "mpg-security-group" # Name of the security group for the PostgreSQL cluster
   pg_cluster_name         = "mpg-cluster"        # Name of the PostgreSQL cluster
   pg_db_name              = "db1"                # Name of the PostgreSQL cluster database
-  pg_username             = "pg-user"            # Name of the PostgreSQL cluster username
+  pg_username             = "pg-user"            # Username of the PostgreSQL cluster
 
   # Data Transfer:
   target_endpoint_name    = "pg-target-tf"       # Name of the target endpoint for the PostgreSQL cluster
@@ -53,7 +53,7 @@ resource "yandex_vpc_network" "mpg_network" {
 }
 
 resource "yandex_vpc_subnet" "mgp_subnet-a" {
-  description    = "Subnet in ru-central1-a availability zone for the Managed Service for Greenplum® cluster"
+  description    = "Subnet in the ru-central1-a availability zone for the Managed Service for Greenplum® cluster"
   name           = local.mgp_subnet_name
   zone           = "ru-central1-a"
   network_id     = yandex_vpc_network.mgp_network.id
@@ -61,7 +61,7 @@ resource "yandex_vpc_subnet" "mgp_subnet-a" {
 }
 
 resource "yandex_vpc_subnet" "mpg_subnet-a" {
-  description    = "Subnet ru-central1-a availability zone for the Managed Service for PostgreSQL cluster"
+  description    = "Subnet in the ru-central1-a availability zone for the Managed Service for PostgreSQL cluster"
   name           = local.mpg_subnet_name
   zone           = "ru-central1-a"
   network_id     = yandex_vpc_network.mpg_network.id
