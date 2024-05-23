@@ -1,49 +1,78 @@
 # Infrastructure for Yandex Cloud Managed Service for Greenplum® cluster, Yandex Cloud Managed Service for PostgreSQL, and Data Transfer
 #
-# RU: https://cloud.yandex.ru/docs/data-transfer/tutorials/greenplum-to-postgresql
-# EN: https://cloud.yandex.com/en/docs/data-transfer/tutorials/greenplum-to-postgresql
+# RU: https://yandex.cloud/ru/docs/data-transfer/tutorials/greenplum-to-postgresql
+# EN: https://yandex.cloud/en/docs/data-transfer/tutorials/greenplum-to-postgresql
 
 # Specify the following settings
 locals {
-  gp_password = "" # Set a password for the Greenplum® admin user
-  pg_password = "" # Set a password for the PostgreSQL admin user
+  # Settings for Managed Service for Greenplum® cluster:
+  gp_version  = "" # Greenplum® version. For available versions, see the documentation main page: https://yandex.cloud/en/docs/managed-greenplum/.
+  gp_password = "" # Greenplum® admin's password
 
-  # Specify these settings ONLY AFTER the clusters are created. Then run "terraform apply" command again
+  # Settings for Managed Service for PostgreSQL cluster:
+  pg_version  = "" # PostgreSQL version. For available versions, see the documentation main page: https://yandex.cloud/en/docs/managed-postgresql/.
+  pg_password = "" # PostgreSQL admin's password
+
+  # Specify these settings ONLY AFTER the clusters are created. Then run "terraform apply" command again.
   # You should set up the source endpoint using the GUI to obtain its ID
   gp_source_endpoint_id = "" # Set the source endpoint ID
-  transfer_enabled      = 0  # Value '0' disables creating of transfer before the source endpoint is created manually. After that, set to '1' to enable transfer
+  transfer_enabled      = 0  # Value '0' disables the transfer creation before the source endpoint is created manually. After that, set to '1' to enable the transfer.
+
+  # The following settings are predefined. Change them only if necessary.
+
+  # Managed Service for Greenplum®:
+  mgp_network_name        = "mgp_network"        # Name of the network for the Greenplum® cluster
+  mgp_subnet_name         = "mgp_subnet-a"       # Name of the subnet for the Greenplum® cluster
+  mgp_security_group_name = "mgp-security-group" # Name of the security group for the Greenplum® cluster
+  gp_cluster_name         = "mgp-cluster"        # Name of the Greenplum® cluster
+  gp_username             = "gp-user"            # Username of the Greenplum® cluster
+
+  # Managed Service for PostgreSQL:
+  mpg_network_name        = "mpg_network"        # Name of the network for the PostgreSQL cluster
+  mpg_subnet_name         = "mpg_subnet-a"       # Name of the subnet for the PostgreSQL cluster
+  mpg_security_group_name = "mpg-security-group" # Name of the security group for the PostgreSQL cluster
+  pg_cluster_name         = "mpg-cluster"        # Name of the PostgreSQL cluster
+  pg_db_name              = "db1"                # Name of the PostgreSQL cluster database
+  pg_username             = "pg-user"            # Username of the PostgreSQL cluster
+
+  # Data Transfer:
+  target_endpoint_name    = "pg-target-tf"       # Name of the target endpoint for the PostgreSQL cluster
+  transfer_name           = "mgp-mpg-transfer"   # Name of the transfer from the Managed Service for Greenplum® cluster to the Managed Service for PostgreSQL cluster
 }
 
+# Network infrastructure
+
 resource "yandex_vpc_network" "mgp_network" {
-  description = "Network for Managed Service for Greenplum®"
-  name        = "mgp_network"
+  description = "Network for the Managed Service for Greenplum® cluster"
+  name        = local.mgp_network_name
 }
 
 resource "yandex_vpc_network" "mpg_network" {
-  description = "Network for Managed Service for PostgreSQL"
-  name        = "mpg_network"
+  description = "Network for the Managed Service for PostgreSQL cluster"
+  name        = local.mpg_network_name
 }
 
 resource "yandex_vpc_subnet" "mgp_subnet-a" {
-  description    = "Subnet in ru-central1-a availability zone for Greenplum®"
-  name           = "mgp_subnet-a"
+  description    = "Subnet in the ru-central1-a availability zone for the Managed Service for Greenplum® cluster"
+  name           = local.mgp_subnet_name
   zone           = "ru-central1-a"
   network_id     = yandex_vpc_network.mgp_network.id
   v4_cidr_blocks = ["10.128.0.0/18"]
 }
 
 resource "yandex_vpc_subnet" "mpg_subnet-a" {
-  description    = "Subnet ru-central1-a availability zone for PostgreSQL"
-  name           = "mpg_subnet-a"
+  description    = "Subnet in the ru-central1-a availability zone for the Managed Service for PostgreSQL cluster"
+  name           = local.mpg_subnet_name
   zone           = "ru-central1-a"
   network_id     = yandex_vpc_network.mpg_network.id
   v4_cidr_blocks = ["10.129.0.0/24"]
 }
 
 resource "yandex_vpc_security_group" "mgp_security_group" {
+  description = "Security group for the Managed Service for Greenplum® cluster"
   network_id  = yandex_vpc_network.mgp_network.id
-  name        = "Managed Greenplum® security group"
-  description = "Security group for Managed Service for Greenplum®"
+  name        = local.mgp_security_group_name
+
 
   ingress {
     description    = "Allow incoming traffic from members of the same security group"
@@ -63,9 +92,9 @@ resource "yandex_vpc_security_group" "mgp_security_group" {
 }
 
 resource "yandex_vpc_security_group" "mpg_security_group" {
+  description = "Security group for the Managed Service for PostgreSQL"
   network_id  = yandex_vpc_network.mpg_network.id
-  name        = "Managed PostgreSQL security group"
-  description = "Security group for Managed Service for PostgreSQL"
+  name        = local.mpg_security_group_name
 
   ingress {
     description    = "Allow incoming traffic from the port 6432"
@@ -83,15 +112,17 @@ resource "yandex_vpc_security_group" "mpg_security_group" {
   }
 }
 
+# Infrastructure for the Managed Service for Greenplum® cluster
+
 resource "yandex_mdb_greenplum_cluster" "mgp-cluster" {
-  description        = "Managed Greenplum® cluster"
-  name               = "mgp-cluster"
+  description        = "Managed Service for Greenplum® cluster"
+  name               = local.gp_cluster_name
   environment        = "PRODUCTION"
   network_id         = yandex_vpc_network.mgp_network.id
   zone               = "ru-central1-a"
   subnet_id          = yandex_vpc_subnet.mgp_subnet-a.id
   assign_public_ip   = true
-  version            = "6.19"
+  version            = local.gp_version
   master_host_count  = 2
   segment_host_count = 2
   segment_in_host    = 1
@@ -110,38 +141,27 @@ resource "yandex_mdb_greenplum_cluster" "mgp-cluster" {
     }
   }
 
-  user_name     = "gp-user"
+  user_name     = local.gp_username
   user_password = local.gp_password
 
   security_group_ids = [yandex_vpc_security_group.mgp_security_group.id]
 }
 
+# Infrastructure for the Managed Service for PostgreSQL cluster
+
 resource "yandex_mdb_postgresql_cluster" "mpg-cluster" {
-  description        = "Managed PostgreSQL cluster"
+  description        = "Managed Service for PostgreSQL cluster"
   name               = "mpg-cluster"
   environment        = "PRODUCTION"
   network_id         = yandex_vpc_network.mpg_network.id
   security_group_ids = [yandex_vpc_security_group.mpg_security_group.id]
 
   config {
-    version = 14
+    version = local.pg_version
     resources {
       resource_preset_id = "s2.micro"
       disk_type_id       = "network-ssd"
       disk_size          = "20"
-    }
-  }
-
-  database {
-    name  = "db1"
-    owner = "pg-user"
-  }
-
-  user {
-    name     = "pg-user"
-    password = local.pg_password
-    permission {
-      database_name = "db1"
     }
   }
 
@@ -152,16 +172,32 @@ resource "yandex_mdb_postgresql_cluster" "mpg-cluster" {
   }
 }
 
+# Database of the Managed Service for PostgreSQL cluster
+resource "yandex_mdb_postgresql_database" "pg-db" {
+  cluster_id = yandex_mdb_postgresql_cluster.mpg-cluster.id
+  name       = local.pg_db_name
+  owner      = yandex_mdb_postgresql_user.pg-user.name
+}
+
+# User of the Managed Service for PostgreSQL cluster
+resource "yandex_mdb_postgresql_user" "pg-user" {
+  cluster_id = yandex_mdb_postgresql_cluster.mpg-cluster.id
+  name       = local.pg_username
+  password   = local.pg_password
+}
+
+# Data Transfer infrastructure
+
 resource "yandex_datatransfer_endpoint" "pg_target" {
-  description = "Target endpoint for PostgreSQL cluster"
-  name        = "pg-target-tf"
+  description = "Target endpoint for the Managed Service for PostgreSQL cluster"
+  name        = local.target_endpoint_name
   settings {
     postgres_target {
       connection {
         mdb_cluster_id = yandex_mdb_postgresql_cluster.mpg-cluster.id
       }
-      database = "db1"
-      user     = "pg-user"
+      database = yandex_mdb_postgresql_database.pg-db.name
+      user     = yandex_mdb_postgresql_user.pg-user.name
       password {
         raw = local.pg_password
       }
@@ -170,10 +206,10 @@ resource "yandex_datatransfer_endpoint" "pg_target" {
 }
 
 resource "yandex_datatransfer_transfer" "mgp-mpg-transfer" {
-  count       = local.transfer_enabled
   description = "Transfer from the Managed Service for Greenplum® to the Managed Service for PostgreSQL"
-  name        = "mgp-mpg-transfer"
+  count       = local.transfer_enabled
+  name        = local.transfer_name
   source_id   = local.gp_source_endpoint_id
   target_id   = yandex_datatransfer_endpoint.pg_target.id
-  type        = "SNAPSHOT_ONLY" # Copying data from the source Managed Service for Greenplum® database.
+  type        = "SNAPSHOT_ONLY" # Copying data from the source Managed Service for Greenplum® database
 }
