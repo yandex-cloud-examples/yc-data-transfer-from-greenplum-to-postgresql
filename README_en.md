@@ -1,0 +1,3 @@
+# Uploading data from Yandex Managed Service for Greenplum® to a Yandex Managed Service for PostgreSQL data mart through Yandex Data Transfer
+
+With [Data Transfer](https://yandex.cloud/en/docs/data-transfer), you can transfer data from a [Managed Service for Greenplum®](https://yandex.cloud/en/docs/managed-greenplum) cluster to a [Managed Service for PostgreSQL](https://yandex.cloud/en/docs/managed-postgresql) one. See [this tutorial](https://yandex.cloud/en/docs/data-transfer/tutorials/greenplum-to-postgresql) to learn how to set up the solution with Terraform. This repository contains the configuration file you will need: [greenplum-postgresql.tf](greenplum-postgresql.tf).
